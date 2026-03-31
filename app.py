@@ -6,17 +6,29 @@ import random
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import stopwords
 
-app = Flask(__name__, template_folder='./templates', static_folder='./static')
+# ✅ Initialize Flask (auto-detects templates & static)
+app = Flask(__name__)
 
-# Load model and vectorizer
+# ✅ Download stopwords safely
+try:
+    nltk.data.find('corpora/stopwords')
+except:
+    nltk.download('stopwords')
+
+# Load model and vectorizer (safe even if unused)
 loaded_model = pickle.load(open("model.pkl", 'rb'))
 vector = pickle.load(open("vector.pkl", 'rb'))
 
 lemmatizer = WordNetLemmatizer()
-stpwrds = set(stopwords.words('english'))
+
+# ✅ Safe stopwords loading
+try:
+    stpwrds = set(stopwords.words('english'))
+except:
+    nltk.download('stopwords')
+    stpwrds = set(stopwords.words('english'))
 
 # Function to process and predict
-
 def fake_news_det(news):
 
     fake_keywords = [
@@ -32,7 +44,6 @@ def fake_news_det(news):
         if word in news_lower:
             return "FAKE"
 
-    # Otherwise → REAL (skip model confusion)
     return "REAL"
 
 
@@ -50,7 +61,6 @@ def predict():
 
         message = request.form.get('news')
 
-        # check empty input
         if not message or len(message.split()) < 5:
             return render_template(
                 'prediction.html',
@@ -73,7 +83,6 @@ def predict():
             confidence=f"Model Confidence: {confidence}%"
         )
 
-    # when page opens without input
     return render_template(
         'prediction.html',
         prediction_text="👉 Enter news and click Detect",
@@ -81,8 +90,6 @@ def predict():
     )
 
 
-# Run app
-import webbrowser
-
+# Run app (for cloud)
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
